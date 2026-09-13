@@ -16,6 +16,7 @@ export default function HomePage() {
     price: '',
     stock: '',
     unit: '',
+    size: '',
   });
 
   // สถานะแก้ไขแบบ inline (เก็บ id ของแถวที่กำลังแก้ไข + ค่าที่แก้)
@@ -63,6 +64,7 @@ export default function HomePage() {
         price: parseFloat(form.price) || 0,
         stock: parseInt(form.stock, 10) || 0,
         unit: form.unit,
+        size: form.size,
       },
     ]);
 
@@ -72,7 +74,7 @@ export default function HomePage() {
     }
 
     // เคลียร์ฟอร์มและโหลดข้อมูลใหม่
-    setForm({ sku: '', name: '', price: '', stock: '', unit: '' });
+    setForm({ sku: '', name: '', price: '', stock: '', unit: '', size: '' });
     fetchProducts();
   }
 
@@ -98,6 +100,7 @@ export default function HomePage() {
       price: product.price,
       stock: product.stock,
       unit: product.unit,
+      size: product.size,
     });
   }
 
@@ -120,6 +123,7 @@ export default function HomePage() {
         price: parseFloat(editForm.price) || 0,
         stock: parseInt(editForm.stock, 10) || 0,
         unit: editForm.unit,
+        size: editForm.size,
       })
       .eq('id', id);
 
@@ -186,6 +190,13 @@ export default function HomePage() {
             onChange={handleFormChange}
             style={{ width: 80 }}
           />
+          <input
+            name="size"
+            placeholder="ไซซ์"
+            value={form.size}
+            onChange={handleFormChange}
+            style={{ width: 80 }}
+          />
           <button type="submit">เพิ่มสินค้า</button>
         </form>
       </div>
@@ -202,6 +213,7 @@ export default function HomePage() {
               <th>ราคา</th>
               <th>คงเหลือ</th>
               <th>หน่วย</th>
+              <th>ไซซ์</th>
               <th>จัดการ</th>
             </tr>
           </thead>
@@ -254,6 +266,14 @@ export default function HomePage() {
                         style={{ width: 60 }}
                       />
                     </td>
+                    <td>
+                      <input
+                        name="size"
+                        value={editForm.size}
+                        onChange={handleEditChange}
+                        style={{ width: 60 }}
+                      />
+                    </td>
                     <td style={{ display: 'flex', gap: 6 }}>
                       <button onClick={() => saveEdit(p.id)}>บันทึก</button>
                       <button
@@ -272,6 +292,7 @@ export default function HomePage() {
                     <td>{Number(p.price).toFixed(2)}</td>
                     <td>{p.stock}</td>
                     <td>{p.unit}</td>
+                    <td>{p.size}</td>
                     <td style={{ display: 'flex', gap: 6 }}>
                       <button onClick={() => startEdit(p)}>แก้ไข</button>
                       <button
@@ -287,7 +308,7 @@ export default function HomePage() {
             ))}
             {products.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', color: '#9ca3af' }}>
+                <td colSpan={7} style={{ textAlign: 'center', color: '#9ca3af' }}>
                   ยังไม่มีสินค้า
                 </td>
               </tr>
