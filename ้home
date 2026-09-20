@@ -1,0 +1,24 @@
+export default function HomePage() {
+  return (
+    <div style={{ padding: 40, textAlign: 'center' }}>
+      <h1>Mini POS</h1>
+      <p style={{ color: '#6b7280', marginBottom: 24 }}>
+        ระบบขายสินค้าและจัดการสต๊อก
+      </p>
+      <a
+        href="/sell"
+        style={{
+          display: 'inline-block',
+          padding: '12px 24px',
+          backgroundColor: '#111827',
+          color: '#fff',
+          borderRadius: 8,
+          textDecoration: 'none',
+          fontWeight: 600,
+        }}
+      >
+        ไปหน้าขายสินค้า
+      </a>
+    </div>
+  );
+}
