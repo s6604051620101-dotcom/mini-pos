@@ -3,6 +3,42 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
+const LOW_STOCK_THRESHOLD = 5;
+
+// กัน HTML injection พังรูปแบบข้อความ Telegram (parse_mode: HTML)
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function formatBangkokTime(date) {
+  return date.toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    dateStyle: 'short',
+    timeStyle: 'medium',
+  });
+}
+
+// ยิงแจ้งเตือนผ่าน API route ของเราเอง (ไม่ยิง Telegram ตรงจาก client)
+// ตั้งใจไม่ throw ต่อ เพื่อไม่ให้กระทบ flow การขายหลัก
+async function sendTelegramNotification(message) {
+  try {
+    const res = await fetch('/api/notify-telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.error('Telegram notify failed:', data);
+    }
+  } catch (err) {
+    console.error('Telegram notify error:', err);
+  }
+}
+
 export default function SellPage() {
   // รายการสินค้าทั้งหมด (สำหรับ dropdown)
   const [products, setProducts] = useState([]);
@@ -177,6 +213,31 @@ export default function SellPage() {
         fetchProducts();
         return;
       }
+
+      // --- แจ้งเตือน Telegram (ไม่บล็อก/ไม่ทำให้การขายล้มเหลวถ้ายิงไม่สำเร็จ) ---
+      const itemTotal = item.price * item.quantity;
+      const timeText = formatBangkokTime(new Date());
+
+      const orderMessage =
+        `🛍️ <b>มีรายการขายใหม่!</b>\n` +
+        `- สินค้า: ${escapeHtml(item.name)}\n` +
+        `- จำนวน: ${item.quantity} ชิ้น\n` +
+        `- ราคารวม: ${itemTotal.toFixed(2)} บาท\n` +
+        `- สต๊อกคงเหลือปัจจุบัน: ${newStock} ชิ้น\n` +
+        `- เวลา: ${timeText}`;
+
+      sendTelegramNotification(orderMessage);
+
+      if (newStock <= LOW_STOCK_THRESHOLD) {
+        const lowStockMessage =
+          `🚨 <b>[เตือนภัย] สต๊อกสินค้าใกล้หมด!</b>\n` +
+          `- สินค้า: ${escapeHtml(item.name)}\n` +
+          `- คงเหลือเพียง: ${newStock} ชิ้น\n` +
+          `⚠️ กรุณาเติมสต๊อกสินค้าด่วน!`;
+
+        sendTelegramNotification(lowStockMessage);
+      }
+      // --- จบส่วนแจ้งเตือน Telegram ---
     }
 
     setSuccessMsg(`ขายสำเร็จ ${validCart.length} รายการ ยอดรวม ${grandTotal.toFixed(2)} บาท`);
@@ -324,5 +385,18 @@ export default function SellPage() {
               >
                 ล้างตะกร้า
               </button>
+              {/* ===== ตั้งแต่บรรทัดนี้ลงไปเป็นส่วนที่ประกอบต่อให้ตามรูปแบบมาตรฐาน ===== */}
               <button
                 onClick={handleCheckout}
+                disabled={cart.length === 0 || submitting}
+              >
+                {submitting ? 'กำลังบันทึก...' : 'ยืนยันการขาย'}
+              </button>
+              {/* ===== จบส่วนที่ประกอบต่อ — เช็คกับไฟล์จริงของคุณอีกครั้ง ===== */}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
